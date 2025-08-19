@@ -1,6 +1,6 @@
 from pathlib import Path
 import os
-import dj_database_url  # optional if you use DATABASE_URL
+import dj_database_url  # optional for Heroku/PostgreSQL URL
 
 # ---------------------------
 # Paths
@@ -15,7 +15,7 @@ SECRET_KEY = os.environ.get(
     "django-insecure-+@qyg$1@fai*1x0h_p!%q11b_jw^=@0hk_+!_)0^u6h4b^k2r+",
 )
 
-DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
+DEBUG = False  # Must be False in production
 
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost").split(",")
 
@@ -23,7 +23,6 @@ ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost").split(",")
 # Installed Apps
 # ---------------------------
 INSTALLED_APPS = [
-    # Django apps
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -31,11 +30,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # Third-party apps
     "rest_framework",
     "rest_framework.authtoken",
 
-    # Local apps
     "accounts",
     "posts",
     "notifications",
@@ -57,9 +54,6 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "social_media_api.urls"
 
-# ---------------------------
-# Templates
-# ---------------------------
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -80,18 +74,18 @@ WSGI_APPLICATION = "social_media_api.wsgi.application"
 # ---------------------------
 # Database
 # ---------------------------
-# Default SQLite (development)
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
-
-# Production PostgreSQL example
-DATABASE_URL = os.environ.get("DATABASE_URL")
+DATABASE_URL = os.environ.get("DATABASE_URL")  # e.g., Heroku Postgres URL
 if DATABASE_URL:
-    DATABASES["default"] = dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+    DATABASES = {
+        "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # ---------------------------
 # Password Validators
@@ -121,7 +115,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# WhiteNoise storage for production
+# WhiteNoise for static files
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # ---------------------------
@@ -144,11 +138,11 @@ REST_FRAMEWORK = {
 }
 
 # ---------------------------
-# Security for Production
+# Production Security
 # ---------------------------
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
-SECURE_SSL_REDIRECT = os.environ.get("DJANGO_SECURE_SSL_REDIRECT", "True") == "True"
+SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
