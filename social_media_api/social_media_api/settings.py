@@ -1,11 +1,27 @@
 from pathlib import Path
+import os
+import dj_database_url  # optional if you use DATABASE_URL
 
+# ---------------------------
+# Paths
+# ---------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "django-insecure-+@qyg$1@fai*1x0h_p!%q11b_jw^=@0hk_+!_)0^u6h4b^k2r+"
-DEBUG = True
-ALLOWED_HOSTS = []
+# ---------------------------
+# Security
+# ---------------------------
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-+@qyg$1@fai*1x0h_p!%q11b_jw^=@0hk_+!_)0^u6h4b^k2r+",
+)
 
+DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
+
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost").split(",")
+
+# ---------------------------
+# Installed Apps
+# ---------------------------
 INSTALLED_APPS = [
     # Django apps
     "django.contrib.admin",
@@ -22,10 +38,15 @@ INSTALLED_APPS = [
     # Local apps
     "accounts",
     "posts",
+    "notifications",
 ]
 
+# ---------------------------
+# Middleware
+# ---------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # for static files in production
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -36,6 +57,9 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "social_media_api.urls"
 
+# ---------------------------
+# Templates
+# ---------------------------
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -53,6 +77,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "social_media_api.wsgi.application"
 
+# ---------------------------
+# Database
+# ---------------------------
+# Default SQLite (development)
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
@@ -60,26 +88,50 @@ DATABASES = {
     }
 }
 
+# Production PostgreSQL example
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if DATABASE_URL:
+    DATABASES["default"] = dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+
+# ---------------------------
+# Password Validators
+# ---------------------------
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",},
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+# ---------------------------
+# Internationalization
+# ---------------------------
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
+USE_L10N = True
 USE_TZ = True
 
-STATIC_URL = "static/"
+# ---------------------------
+# Static & Media Files
+# ---------------------------
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+# WhiteNoise storage for production
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+# ---------------------------
+# Custom User Model
+# ---------------------------
 AUTH_USER_MODEL = "accounts.User"
 
+# ---------------------------
+# Django REST Framework
+# ---------------------------
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.TokenAuthentication",
@@ -90,3 +142,13 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 5,
 }
+
+# ---------------------------
+# Security for Production
+# ---------------------------
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
+SECURE_SSL_REDIRECT = os.environ.get("DJANGO_SECURE_SSL_REDIRECT", "True") == "True"
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
