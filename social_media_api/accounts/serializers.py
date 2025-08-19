@@ -2,15 +2,16 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework.authtoken.models import Token
 
+User = get_user_model()
 
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
-        model = get_user_model()
+        model = User
         fields = ["username", "email", "password"]
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
-        # ✅ Explicitly use get_user_model().objects.create_user
+        # Explicitly use get_user_model().objects.create_user
         user = get_user_model().objects.create_user(
             username=validated_data["username"],
             email=validated_data.get("email"),
@@ -34,5 +35,11 @@ class LoginSerializer(serializers.Serializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = get_user_model()
-        fields = ["id", "username", "email", "bio", "profile_picture", "followers"]
+        model = User
+        fields = ["id", "username", "email", "bio", "profile_picture", "followers", "following"]
+
+
+class FollowSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "following"]
