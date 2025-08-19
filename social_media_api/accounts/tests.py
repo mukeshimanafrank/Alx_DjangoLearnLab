@@ -1,3 +1,8 @@
-from django.test import TestCase
+from django.urls import path
+from .views import RegisterView, LoginView, ProfileView
 
-# Create your tests here.
+urlpatterns = [
+    path("register", RegisterView.as_view(), name="register"),
+    path("login", LoginView.as_view(), name="login"),
+    path("profile", ProfileView.as_view(), name="profile"),
+]
