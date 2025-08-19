@@ -10,6 +10,7 @@ from notifications.models import Notification
 # Permissions
 # ---------------------------
 class IsOwnerOrReadOnly(permissions.BasePermission):
+    """Allow owners to edit/delete, read-only for others"""
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
@@ -62,6 +63,7 @@ class LikePostView(APIView):
         like, created = Like.objects.get_or_create(user=request.user, post=post)
         if not created:
             return Response({"detail": "Already liked."}, status=status.HTTP_400_BAD_REQUEST)
+        # Create notification if liker is not the author
         if post.author != request.user:
             Notification.objects.create(
                 recipient=post.author,
@@ -69,7 +71,8 @@ class LikePostView(APIView):
                 verb="liked your post",
                 target=post
             )
-        return Response({"detail": "Post liked."}, status=status.HTTP_201_CREATED)
+        serializer = LikeSerializer(like)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class UnlikePostView(APIView):
     permission_classes = [permissions.IsAuthenticated]
