@@ -1,28 +1,24 @@
-from pathlib import Path
 import os
-import dj_database_url  # optional for Heroku/PostgreSQL URL
+from pathlib import Path
 
 # ---------------------------
-# Paths
+# Base Directory
 # ---------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ---------------------------
 # Security
 # ---------------------------
-SECRET_KEY = os.environ.get(
-    "DJANGO_SECRET_KEY",
-    "django-insecure-+@qyg$1@fai*1x0h_p!%q11b_jw^=@0hk_+!_)0^u6h4b^k2r+",
-)
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "replace-this-in-production")
+DEBUG = False  # Production mode
 
-DEBUG = False  # Must be False in production
-
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost").split(",")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
 # ---------------------------
 # Installed Apps
 # ---------------------------
 INSTALLED_APPS = [
+    # Django apps
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -30,9 +26,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    # Third-party apps
     "rest_framework",
     "rest_framework.authtoken",
 
+    # Local apps
     "accounts",
     "posts",
     "notifications",
@@ -43,7 +41,6 @@ INSTALLED_APPS = [
 # ---------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # for static files in production
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -52,6 +49,9 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+# ---------------------------
+# URL Configuration
+# ---------------------------
 ROOT_URLCONF = "social_media_api.urls"
 
 TEMPLATES = [
@@ -74,21 +74,19 @@ WSGI_APPLICATION = "social_media_api.wsgi.application"
 # ---------------------------
 # Database
 # ---------------------------
-DATABASE_URL = os.environ.get("DATABASE_URL")  # e.g., Heroku Postgres URL
-if DATABASE_URL:
-    DATABASES = {
-        "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+DATABASES = {
+    "default": {
+        "ENGINE": os.environ.get("DB_ENGINE", "django.db.backends.postgresql"),
+        "NAME": os.environ.get("DB_NAME", "social_media_db"),
+        "USER": os.environ.get("DB_USER", "postgres"),
+        "PASSWORD": os.environ.get("DB_PASSWORD", "password"),
+        "HOST": os.environ.get("DB_HOST", "localhost"),
+        "PORT": os.environ.get("DB_PORT", "5432"),
     }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
+}
 
 # ---------------------------
-# Password Validators
+# Password Validation
 # ---------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -103,20 +101,21 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
-USE_L10N = True
 USE_TZ = True
 
 # ---------------------------
 # Static & Media Files
 # ---------------------------
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = BASE_DIR / "staticfiles"  # For collectstatic
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# WhiteNoise for static files
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# ---------------------------
+# Default Primary Key
+# ---------------------------
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ---------------------------
 # Custom User Model
@@ -124,7 +123,7 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 AUTH_USER_MODEL = "accounts.User"
 
 # ---------------------------
-# Django REST Framework
+# DRF Configuration
 # ---------------------------
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -138,11 +137,16 @@ REST_FRAMEWORK = {
 }
 
 # ---------------------------
-# Production Security
+# Production Security Settings
 # ---------------------------
 SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
-SECURE_SSL_REDIRECT = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_SSL_REDIRECT = True  # Only enable if you have HTTPS
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
+
+# ---------------------------
+# Deployment Port
+# ---------------------------
+PORT = int(os.environ.get("PORT", 8000))  # Heroku sets this automatically
