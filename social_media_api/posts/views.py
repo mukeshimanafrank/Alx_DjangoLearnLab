@@ -1,12 +1,15 @@
 from rest_framework import viewsets, permissions, filters, generics
-from .models import Post, Comment
-from .serializers import PostSerializer, CommentSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Post, Comment, Like
+from .serializers import PostSerializer, CommentSerializer, LikeSerializer
+from notifications.models import Notification
 
 # ---------------------------
 # Permissions
 # ---------------------------
 class IsOwnerOrReadOnly(permissions.BasePermission):
-    """Allow owners to edit/delete, read-only for others"""
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
@@ -45,5 +48,20 @@ class FeedView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        following_users = user.following.all()  # users that the current user follows
+        following_users = user.following.all()
         return Post.objects.filter(author__in=following_users).order_by("-created_at")
+
+# ---------------------------
+# Likes
+# ---------------------------
+class LikePostView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        post = Post.objects.get(pk=pk)
+        like, created = Like.objects.get_or_create(user=request.user, post=post)
+        if not created:
+            return Response({"detail": "Already liked."}, status=status.HTTP_400_BAD_REQUEST)
+        if post.author != request.user:
+            Notification.objects.create(
+                recipient
