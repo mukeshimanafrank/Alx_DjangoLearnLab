@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Notification
 
+
 class NotificationSerializer(serializers.ModelSerializer):
     actor_username = serializers.ReadOnlyField(source="actor.username")
     target_repr = serializers.SerializerMethodField()

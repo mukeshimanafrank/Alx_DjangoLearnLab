@@ -6,6 +6,7 @@ from .serializers import RegisterSerializer, LoginSerializer, UserProfileSeriali
 
 User = get_user_model()
 
+
 class RegisterView(generics.GenericAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
@@ -14,7 +15,10 @@ class RegisterView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        return Response({"username": user.username, "id": user.id}, status=status.HTTP_201_CREATED)
+        return Response(
+            {"username": user.username, "id": user.id}, status=status.HTTP_201_CREATED
+        )
+
 
 class LoginView(generics.GenericAPIView):
     serializer_class = LoginSerializer
@@ -25,12 +29,14 @@ class LoginView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         return Response(serializer.validated_data)
 
+
 class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
         return self.request.user
+
 
 class ListUsersView(generics.GenericAPIView):
     serializer_class = UserProfileSerializer
@@ -41,6 +47,7 @@ class ListUsersView(generics.GenericAPIView):
         serializer = self.get_serializer(users, many=True)
         return Response(serializer.data)
 
+
 # Follow/Unfollow
 class FollowUserView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -49,6 +56,7 @@ class FollowUserView(APIView):
         target_user = User.objects.get(id=user_id)
         request.user.following.add(target_user)
         return Response({"detail": f"You are now following {target_user.username}"})
+
 
 class UnfollowUserView(APIView):
     permission_classes = [permissions.IsAuthenticated]
